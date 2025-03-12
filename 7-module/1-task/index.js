@@ -4,10 +4,12 @@ export default class RibbonMenu {
 
   elem = null;
   #ribbon = null;
+  #selectedCategory = null;
 
   constructor(categories) {
 
     this.categories = categories;
+    
 
     this.#ribbon = createElement(
       `<div class="ribbon">
@@ -26,9 +28,11 @@ export default class RibbonMenu {
 
     let ribbonInner = this.#ribbon.querySelector('.ribbon__inner');
     categories.forEach(element => {
-      ribbonInner.append(createElement(
+      let categoryElement = createElement(
         `<a href="#" class="ribbon__item" data-id="${element.id}">${element.name}</a>`
-      ));
+      );
+      categoryElement.addEventListener('click', this.#categoryClick.bind(this, element.id));
+      ribbonInner.append(categoryElement);
     });
 
     let btnLeft  = this.#ribbon.querySelector('.ribbon__arrow_left');
@@ -39,6 +43,25 @@ export default class RibbonMenu {
     this.#checkBtnVisibility();
 
     this.elem = this.#ribbon;
+  }
+
+  #categoryClick(categoryId, event) {
+    
+    let categoryElement = document.querySelector(`[data-id="${categoryId}"]`);
+    event.preventDefault();
+
+    if (this.#selectedCategory != null && this.#selectedCategory != categoryElement) {
+      this.#selectedCategory.classList.remove('ribbon__item_active');
+    }
+    categoryElement.classList.add('ribbon__item_active');
+    this.#selectedCategory = categoryElement;
+
+    const customEvent = new CustomEvent("ribbon-select", {
+      detail: categoryId,
+      bubbles: true
+    });
+    this.elem.dispatchEvent(customEvent);
+
   }
 
   #arrowBtnClick(btnType) {
@@ -55,16 +78,12 @@ export default class RibbonMenu {
   }
 
   #checkBtnVisibility() {
+    
     let ribbonIner = this.#ribbon.querySelector('.ribbon__inner')
     let scrollLeft = ribbonIner.scrollLeft;
     let scrollWidth = ribbonIner.scrollWidth;
     let clientWidth = ribbonIner.clientWidth;
     let scrollRight = scrollWidth - scrollLeft - clientWidth;
-
-    console.log(`scrollLeft = ${scrollLeft}`);
-    console.log(`scrollWidth = ${scrollWidth}`);
-    console.log(`clientWidth = ${clientWidth}`);
-    console.log(`scrollRight = ${scrollRight}`);
 
     if (scrollLeft === 0) {
       this.#ribbon.querySelector('.ribbon__arrow_left').classList.remove('ribbon__arrow_visible');
